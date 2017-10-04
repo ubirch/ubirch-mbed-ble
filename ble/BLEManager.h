@@ -27,8 +27,29 @@
 
 #include <BLE.h>
 
-class BLEManager {
+class BLEConfig {
+public:
+    const char *deviceName;
+    uint16_t advertisingInterval;
+    uint16_t advertisingTimeout;
 
+    explicit BLEConfig(const char *deviceName = "BLEDEVICE",
+                       uint16_t advertisingInterval = 10,
+                       uint16_t advertisingTimeout = 0) {
+        this->deviceName = deviceName;
+        this->advertisingInterval = advertisingInterval;
+        this->advertisingTimeout = advertisingTimeout;
+    }
+
+    virtual void onConnection(const Gap::ConnectionCallbackParams_t *params) {};
+
+    virtual void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
+        // restart advertising if connection is lost
+        BLE::Instance().gap().startAdvertising();
+    }
+};
+
+class BLEManager {
 public:
     /**
      * Get a singleton of this manager.
@@ -46,32 +67,15 @@ public:
      * @param deviceName the name of  the BLE device for advertisement
      * @return if the initialization was successful
      */
-    ble_error_t init(const char *deviceName = "BLEDEVICE",
-                     uint16_t advertisingInterval = 10,
-                     uint16_t advertisingTimeout = 0);
+    ble_error_t init(BLEConfig *config = new BLEConfig());
 
-    /**
-     * Handle the connection of a BLE device.
-     */
-    void onConnection(const Gap::ConnectionCallbackParams_t *params) {
-        // no special handling
-    }
+    ble_error_t init(const char *deviceName, const uint16_t advInterval = 10, const uint16_t advTimeout = 0);
 
-    /**
-     * Handle the disconnection of a BLE device. 
-     */
-    void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
-        // restart advertising if connection is lost
-        BLE::Instance().gap().startAdvertising();
-    }
-
-    char *getDeviceName() { return deviceName; }
+    ble_error_t deinit();
 
 protected:
     BLEManager() {
-        deviceName = NULL;
-        advertisingInterval = 10;
-        advertisingTimeout = 0;
+        config = NULL;
         error = BLE_ERROR_NONE;
         isInitialized = true;
     };
@@ -79,10 +83,7 @@ protected:
     void _init(BLE::InitializationCompleteCallbackContext *params);
 
 private:
-    char *deviceName;
-    uint16_t advertisingInterval;
-    uint16_t advertisingTimeout;
-
+    BLEConfig *config;
     bool isInitialized;
     ble_error_t error;
 };

@@ -55,12 +55,12 @@ void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     }
     if (error != BLE_ERROR_NONE) return;
 
-    ble.gap().onConnection(this, &BLEManager::onConnection);
-    ble.gap().onDisconnection(this, &BLEManager::onDisconnection);
+    ble.gap().onConnection(config, &BLEConfig::onConnection);
+    ble.gap().onDisconnection(config, &BLEConfig::onDisconnection);
     error = ble.gap().setAddress(BLEProtocol::AddressType::RANDOM_PRIVATE_RESOLVABLE, {0});
     ASSERT(error == BLE_ERROR_NONE, "address type");
 
-    error = ble.gap().setDeviceName((uint8_t *) deviceName);
+    error = ble.gap().setDeviceName((uint8_t *) config->deviceName);
     ASSERT(error == BLE_ERROR_NONE, "device name");
 
     error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED |
@@ -68,22 +68,23 @@ void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     ASSERT(error == BLE_ERROR_NONE, "adv payload");
 
     error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME,
-                                                   (uint8_t *) deviceName, strlen(deviceName));
+                                                   (uint8_t *) config->deviceName,
+                                                   static_cast<uint8_t>(strlen(config->deviceName)));
     ASSERT(error == BLE_ERROR_NONE, "local name");
     
     ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().setAdvertisingInterval(advertisingInterval);
-    ble.gap().setAdvertisingTimeout(advertisingTimeout);
+    ble.gap().setAdvertisingInterval(config->advertisingInterval);
+    ble.gap().setAdvertisingTimeout(config->advertisingTimeout);
     error = ble.gap().startAdvertising();
     ASSERT(error == BLE_ERROR_NONE, "start adv");
     
     isInitialized = true;
 }
 
-ble_error_t BLEManager::init(const char *deviceName, uint16_t advertisingInterval, uint16_t advertisingTimeout) {
-    this->deviceName = const_cast<char *>(deviceName);
-    this->advertisingInterval = advertisingInterval;
-    this->advertisingTimeout = advertisingTimeout;
+ble_error_t BLEManager::init(BLEConfig *config) {
+    if(isInitialized) BLE_ERROR_INVALID_STATE;
+
+    this->config = config;
 
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
@@ -92,6 +93,19 @@ ble_error_t BLEManager::init(const char *deviceName, uint16_t advertisingInterva
     while (!isInitialized && error == BLE_ERROR_NONE) /* wait for initialization done or error state */;
 
     return error;
+}
+
+ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval, const uint16_t advTimeout) {
+    if(!isInitialized) return init(new BLEConfig(deviceName, advInterval, advTimeout));
+    return BLE_ERROR_INVALID_STATE;
+}
+
+ble_error_t BLEManager::deinit() {
+    if(isInitialized) {
+        isInitialized = false;
+        return BLE::Instance().shutdown();
+    }
+    return BLE_ERROR_NONE;
 }
 
 

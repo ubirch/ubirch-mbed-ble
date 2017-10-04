@@ -38,31 +38,58 @@ using namespace utest::v1;
 void TestBLEManagerSingleton() {
     BLEManager &i1 = BLEManager::getInstance();
     BLEManager &i2 = BLEManager::getInstance();
-    printf("BLEManager[%p] == BLEManager[%p]\r\n", &i1, &i2);
+    printf("singleton::BLEManager[%p] == BLEManager[%p]\r\n", &i1, &i2);
 
     TEST_ASSERT_EQUAL_INT32_MESSAGE(&i1, &i2, "singleton instances are not the same");
 }
 
 void TestBLEManagerInit() {
     BLEManager &bleManager = BLEManager::getInstance();
-    printf("BLEManager[%p]\r\n", &bleManager);
+    printf("init::BLEManager[%p]\r\n", &bleManager);
+
     TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(), "BLE manager initialization failed");
-    delete &bleManager;
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.deinit(), "BLE deinit failed");
 }
 
 void TestBLEManagerAdvertising() {
     char k[48], v[128];
+    BLEConfig config("0123456789ABCDEF");
 
     BLEManager &bleManager = BLEManager::getInstance();
-    printf("BLEManager[%p]\r\n", &bleManager);
-    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init("0123456789ABCDEF"), "BLE manager initialization failed");
+    printf("advertising::BLEManager[%p]\r\n", &bleManager);
 
-    char *const deviceName = bleManager.getDeviceName();
-    greentea_send_kv("discover", deviceName);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(&config), "BLE manager initialization failed");
+
+    greentea_send_kv("discover", config.deviceName);
     greentea_parse_kv(k, v, sizeof(k), sizeof(v));
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(deviceName,  v, "BLE device discovery failed");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(config.deviceName, v, "BLE device discovery failed");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.deinit(), "BLE deinit failed");
+}
 
-    delete &bleManager;
+
+void TestBLEManagerOnConnection() {
+    char k[48], v[128];
+
+    class BLEConfigOnConnection : public BLEConfig {
+    public:
+        explicit BLEConfigOnConnection(const char *name) : BLEConfig(name) {};
+
+        void onConnection(const Gap::ConnectionCallbackParams_t *params) {
+            greentea_send_kv("connected", "ISCONNECTED");
+        }
+    };
+    BLEConfigOnConnection config = BLEConfigOnConnection("C0NNECTME");
+
+    BLEManager &bleManager = BLEManager::getInstance();
+    printf("onConnection::BLEManager[%p]\r\n", &bleManager);
+
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(&config), "BLE manager initialization failed");
+
+    greentea_send_kv("connect", config.deviceName);
+    greentea_parse_kv(k, v, sizeof(k), sizeof(v));
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("connected", k, "wrong key received");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("ISCONNECTED", v, "wrong device connected");
 }
 
 utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) {
@@ -74,11 +101,19 @@ Case cases[] = {
 Case("Test stack-ble-singleton", TestBLEManagerSingleton, greentea_failure_handler),
 Case("Test stack-ble-init", TestBLEManagerInit, greentea_failure_handler),
 Case("Test stack-ble-advertise", TestBLEManagerAdvertising, greentea_failure_handler),
+Case("Test stack-ble-on-connection", TestBLEManagerOnConnection, greentea_failure_handler),
 };
 
 utest::v1::status_t greentea_test_setup(const size_t number_of_cases) {
-    GREENTEA_SETUP(300, "BLEManagerTests");
-    return greentea_test_setup_handler(number_of_cases);
+    GREENTEA_SETUP(60, "BLEManagerTests");
+    return verbose_test_setup_handler(number_of_cases);
+}
+
+void greentea_test_teardown(const size_t passed, const size_t failed, const failure_t failure)
+{
+    printf("BLEManager::shutdown()");
+    BLEManager::getInstance().deinit();
+    greentea_test_teardown_handler(passed, failed, failure);
 }
 
 int main() {
@@ -105,6 +140,6 @@ int main() {
         wait(1);
     }
 
-    Specification specification(greentea_test_setup, cases, greentea_test_teardown_handler);
-    Harness::run(specification);
+    Specification specification(greentea_test_setup, cases, greentea_test_teardown);
+    return !Harness::run(specification);
 }
