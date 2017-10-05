@@ -10,11 +10,16 @@ mbed add https://github.com/ubirch/ubirch-mbed-ble
 
 > The host tests require a host BLE adapter to receive data and discover devices.
 
+### Prerequisites
+
+- [Python Bleep BLE](https://github.com/matthewelse/bleep)
+- Linux: `bluez`
+
 ```bash
 mbed new .
 mbed target NRF52_DK
 mbed toolchain GCC_ARM
-mbed test -n tests-ble*
+mbed test -n tests-ble* -vv
 ```
 
 # License
