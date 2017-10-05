@@ -75,7 +75,7 @@ void TestBLEManagerOnConnection() {
         explicit BLEConfigOnConnection(const char *name) : BLEConfig(name) {};
 
         void onConnection(const Gap::ConnectionCallbackParams_t *params) {
-            greentea_send_kv("connected", "ISCONNECTED");
+            greentea_send_kv("connected", "OK");
         }
     };
     BLEConfigOnConnection config = BLEConfigOnConnection("C0NNECTME");
@@ -89,7 +89,7 @@ void TestBLEManagerOnConnection() {
     greentea_parse_kv(k, v, sizeof(k), sizeof(v));
 
     TEST_ASSERT_EQUAL_STRING_MESSAGE("connected", k, "wrong key received");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("ISCONNECTED", v, "wrong device connected");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device connected");
 }
 
 utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) {
