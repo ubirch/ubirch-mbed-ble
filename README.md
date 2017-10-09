@@ -12,8 +12,10 @@ mbed add https://github.com/ubirch/ubirch-mbed-ble
 
 ### Prerequisites
 
-- [Python Bleep BLE](https://github.com/matthewelse/bleep)
-- Linux: `bluez`
+- [Python BLE Wrapper](https://github.com/brettchien/PyBLEWrapper)
+    ```
+    pip install -U git+https://github.com/brettchien/PyBLEWrapper.git
+    ```
 
 ```bash
 mbed new .

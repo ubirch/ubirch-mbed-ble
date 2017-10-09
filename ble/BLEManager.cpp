@@ -86,7 +86,7 @@ ble_error_t BLEManager::init(BLEConfig *config) {
 
     this->config = config;
 
-    BLE &ble = BLE::Instance();
+    BLE& ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(this, &BLEManager::_init);
 
@@ -107,6 +107,4 @@ ble_error_t BLEManager::deinit() {
     }
     return BLE_ERROR_NONE;
 }
-
-
 

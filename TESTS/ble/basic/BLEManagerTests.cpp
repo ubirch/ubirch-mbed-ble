@@ -32,10 +32,11 @@
 #include "utest/utest.h"
 #include "unity/unity.h"
 #include "greentea-client/test_env.h"
+#include "../testhelper.h"
 
 using namespace utest::v1;
 
-void TestBLEManagerSingleton() {
+void TestBLEUartServiceInit() {
     BLEManager &i1 = BLEManager::getInstance();
     BLEManager &i2 = BLEManager::getInstance();
     printf("singleton::BLEManager[%p] == BLEManager[%p]\r\n", &i1, &i2);
@@ -67,7 +68,7 @@ void TestBLEManagerAdvertising() {
 }
 
 
-void TestBLEManagerOnConnection() {
+void TestBLEManagerOnCallbacks() {
     char k[48], v[128];
 
     class BLEConfigOnConnection : public BLEConfig {
@@ -76,6 +77,9 @@ void TestBLEManagerOnConnection() {
 
         void onConnection(const Gap::ConnectionCallbackParams_t *params) {
             greentea_send_kv("connected", "OK");
+        }
+        void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
+            greentea_send_kv("disconnected", "OK");
         }
     };
     BLEConfigOnConnection config = BLEConfigOnConnection("C0NNECTME");
@@ -86,10 +90,14 @@ void TestBLEManagerOnConnection() {
     TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(&config), "BLE manager initialization failed");
 
     greentea_send_kv("connect", config.deviceName);
-    greentea_parse_kv(k, v, sizeof(k), sizeof(v));
 
+    greentea_parse_kv(k, v, sizeof(k), sizeof(v));
     TEST_ASSERT_EQUAL_STRING_MESSAGE("connected", k, "wrong key received");
     TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device connected");
+
+    greentea_parse_kv(k, v, sizeof(k), sizeof(v));
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("disconnected", k, "wrong key received");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device disconnected");
 }
 
 utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) {
@@ -98,10 +106,10 @@ utest::v1::status_t greentea_failure_handler(const Case *const source, const fai
 }
 
 Case cases[] = {
-Case("Test stack-ble-singleton", TestBLEManagerSingleton, greentea_failure_handler),
-Case("Test stack-ble-init", TestBLEManagerInit, greentea_failure_handler),
-Case("Test stack-ble-advertise", TestBLEManagerAdvertising, greentea_failure_handler),
-Case("Test stack-ble-on-connection", TestBLEManagerOnConnection, greentea_failure_handler),
+Case("Test ble-singleton", TestBLEUartServiceInit, greentea_failure_handler),
+Case("Test ble-init", TestBLEManagerInit, greentea_failure_handler),
+Case("Test ble-advertise", TestBLEManagerAdvertising, greentea_failure_handler),
+Case("Test ble-on-callbacks", TestBLEManagerOnCallbacks, greentea_failure_handler),
 };
 
 utest::v1::status_t greentea_test_setup(const size_t number_of_cases) {
@@ -117,29 +125,8 @@ void greentea_test_teardown(const size_t passed, const size_t failed, const fail
 }
 
 int main() {
-
-    // initialize external clock for our tests
-    DigitalOut externalClockPin(P0_27, 0);
-
-    externalClockPin = 0;
-    wait_ms(100);
-    externalClockPin = 1;
-    wait_ms(100);
-
-    /* Mark the HF clock as not started */
-    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-    /* Try to start the HF clock */
-    NRF_CLOCK->TASKS_HFCLKSTART = 1;
-
-    //Make sure HFCLK is on
-    //TODO use a while loop and reset module if it fails to init HFCLK
-    for (int i = 0; i < 5; i++) {
-        if (NRF_CLOCK->EVENTS_HFCLKSTARTED) {
-            break;
-        }
-        wait(1);
-    }
-
+    bleClockInit();
+    
     Specification specification(greentea_test_setup, cases, greentea_test_teardown);
     return !Harness::run(specification);
 }

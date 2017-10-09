@@ -77,7 +77,7 @@ protected:
     BLEManager() {
         config = NULL;
         error = BLE_ERROR_NONE;
-        isInitialized = true;
+        isInitialized = false;
     };
 
     void _init(BLE::InitializationCompleteCallbackContext *params);
