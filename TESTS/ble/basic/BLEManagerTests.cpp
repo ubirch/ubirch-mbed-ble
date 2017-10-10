@@ -1,8 +1,6 @@
 /*!
  * @file
- * @brief TODO: ${FILE}
- *
- * ...
+ * @brief Test for the BLE service
  *
  * @author Matthias L. Jugel
  * @date   2017-10-02
@@ -36,7 +34,7 @@
 
 using namespace utest::v1;
 
-void TestBLEUartServiceInit() {
+void TestBLEUartServiceDiscoverCharacteristics() {
     BLEManager &i1 = BLEManager::getInstance();
     BLEManager &i2 = BLEManager::getInstance();
     printf("singleton::BLEManager[%p] == BLEManager[%p]\r\n", &i1, &i2);
@@ -78,6 +76,7 @@ void TestBLEManagerOnCallbacks() {
         void onConnection(const Gap::ConnectionCallbackParams_t *params) {
             greentea_send_kv("connected", "OK");
         }
+
         void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
             greentea_send_kv("disconnected", "OK");
         }
@@ -100,33 +99,37 @@ void TestBLEManagerOnCallbacks() {
     TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device disconnected");
 }
 
+utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
+                                          const failure_t reason) {
+    printf("BLEManager::getInstance().deinit()");
+    BLEManager::getInstance().deinit();
+    return greentea_case_teardown_handler(source, passed, failed, reason);
+}
+
 utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) {
     greentea_case_failure_abort_handler(source, reason);
     return STATUS_CONTINUE;
 }
-
-Case cases[] = {
-Case("Test ble-singleton", TestBLEUartServiceInit, greentea_failure_handler),
-Case("Test ble-init", TestBLEManagerInit, greentea_failure_handler),
-Case("Test ble-advertise", TestBLEManagerAdvertising, greentea_failure_handler),
-Case("Test ble-on-callbacks", TestBLEManagerOnCallbacks, greentea_failure_handler),
-};
 
 utest::v1::status_t greentea_test_setup(const size_t number_of_cases) {
     GREENTEA_SETUP(60, "BLEManagerTests");
     return verbose_test_setup_handler(number_of_cases);
 }
 
-void greentea_test_teardown(const size_t passed, const size_t failed, const failure_t failure)
-{
-    printf("BLEManager::shutdown()");
-    BLEManager::getInstance().deinit();
-    greentea_test_teardown_handler(passed, failed, failure);
-}
-
 int main() {
     bleClockInit();
-    
-    Specification specification(greentea_test_setup, cases, greentea_test_teardown);
+
+    Case cases[] = {
+    Case("Test ble-singleton", TestBLEUartServiceDiscoverCharacteristics,
+         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-init", TestBLEManagerInit,
+         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-advertise", TestBLEManagerAdvertising,
+         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-on-callbacks", TestBLEManagerOnCallbacks,
+         case_teardown_handler, greentea_failure_handler),
+    };
+
+    Specification specification(greentea_test_setup, cases, greentea_test_teardown_handler);
     return !Harness::run(specification);
 }

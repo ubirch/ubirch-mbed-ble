@@ -171,20 +171,25 @@ add_library(mbed-os ${MBED_OS_SRCS})
 include_directories(${MBED_OS})
 # == END MBED OS 5 ==
 
-add_library(ble ble/BLEManager.cpp)
+add_library(ble
+        ble/BLEManager.cpp
+        ble/services/BLEUartService.cpp)
 target_include_directories(ble PUBLIC ble)
 
-add_executable(test-ble-basic TESTS/ble/basic/BLEManagerTests.cpp)
-target_link_libraries(test-ble-basic mbed-os ble)
+add_executable(ble-tests
+        TESTS/ble/basic/BLEManagerTests.cpp
+        TESTS/ble/services/BLEUartServiceTests.cpp
+        )
+target_link_libraries(ble-tests mbed-os ble)
 
 add_custom_target(run-tests ALL
-        COMMAND mbed test -n tests-ble* -vv
+        COMMAND mbed test -n tests-ble*
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(debug-tests ALL
-        COMMAND mbed test -n tests-ble* -vv --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble-basic* -vv --profile mbed-os/tools/profiles/debug.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(compile-debug-tests ALL
-        COMMAND mbed test -n tests-ble* -c --compile --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble* --compile --profile mbed-os/tools/profiles/debug.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
