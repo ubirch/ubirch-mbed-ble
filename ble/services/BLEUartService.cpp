@@ -90,9 +90,7 @@ int BLEUartService::send(const uint8_t *buf, int length) {
 
             if (nextHead != txBufferTail) {
                 txBuffer[txBufferHead] = buf[bufferIterator];
-
                 txBufferHead = nextHead;
-
                 bytesWritten++;
             }
         }
@@ -104,7 +102,6 @@ int BLEUartService::send(const uint8_t *buf, int length) {
         circularCopy(txBuffer, txBufferSize, temp, txBufferTail, txBufferHead);
 
         ble.gattServer().write(rxCharacteristic->getValueAttribute().getHandle(), temp, size);
-
         ble.gattServer().areUpdatesEnabled(*rxCharacteristic, &updatesEnabled);
     }
 
@@ -153,7 +150,6 @@ void BLEUartService::circularCopy(const uint8_t *circularBuff, uint8_t circularB
 
     while (tailPosition != headPosition) {
         linearBuff[toBuffIndex++] = circularBuff[tailPosition];
-
         tailPosition = static_cast<uint16_t>((tailPosition + 1) % circularBuffSize);
     }
 }
