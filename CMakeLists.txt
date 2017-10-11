@@ -178,7 +178,7 @@ target_include_directories(ble PUBLIC ble)
 
 add_executable(ble-tests
         TESTS/ble/basic/BLEManagerTests.cpp
-        TESTS/ble/services/BLEUartServiceTests.cpp
+        TESTS/ble/uart/BLEUartServiceTests.cpp
         )
 target_link_libraries(ble-tests mbed-os ble)
 
@@ -187,7 +187,7 @@ add_custom_target(run-tests ALL
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(debug-tests ALL
-        COMMAND mbed test -n tests-ble-basic* -vv --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble* -vv --profile mbed-os/tools/profiles/debug.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(compile-debug-tests ALL

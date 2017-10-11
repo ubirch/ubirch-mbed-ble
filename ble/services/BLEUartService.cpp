@@ -56,7 +56,8 @@ BLEUartService::BLEUartService(BLE &_ble, uint8_t _rxBufferSize, uint8_t _txBuff
                                               GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE);
     rxCharacteristic = new GattCharacteristic(UARTServiceRXCharacteristicUUID,
                                               txBuffer, 1, static_cast<uint16_t>(txBufferSize),
-                                              GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_INDICATE);
+                                              GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ |
+                                              GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
 
     GattCharacteristic *charTable[] = {txCharacteristic, rxCharacteristic};
     GattService uartService(UARTServiceUUID, charTable, sizeof(charTable) / sizeof(GattCharacteristic *));
@@ -75,16 +76,17 @@ bool BLEUartService::isReadable() {
 int BLEUartService::send(const uint8_t *buf, int length) {
     if (length < 1) return EOF;
 
-    bool updatesEnabled = false;
+//    bool updatesEnabled = false;
 
-    ble.gattServer().areUpdatesEnabled(*txCharacteristic, &updatesEnabled);
+//    ble.gattServer().areUpdatesEnabled(*rxCharacteristic, &updatesEnabled);
 
-    if (!ble.getGapState().connected && !updatesEnabled)
+    if (!ble.getGapState().connected/* && !updatesEnabled*/)
         return EOF;
 
     int bytesWritten = 0;
 
-    while (bytesWritten < length && ble.getGapState().connected && updatesEnabled) {
+    while (bytesWritten < length && ble.getGapState().connected/* && updatesEnabled*/) {
+
         for (int bufferIterator = bytesWritten; bufferIterator < length; bufferIterator++) {
             uint8_t nextHead = static_cast<uint8_t>((txBufferHead + 1) % txBufferSize);
 
@@ -101,8 +103,10 @@ int BLEUartService::send(const uint8_t *buf, int length) {
 
         circularCopy(txBuffer, txBufferSize, temp, txBufferTail, txBufferHead);
 
-        ble.gattServer().write(rxCharacteristic->getValueAttribute().getHandle(), temp, size);
-        ble.gattServer().areUpdatesEnabled(*rxCharacteristic, &updatesEnabled);
+        ble_error_t error = ble.gattServer().write(rxCharacteristic->getValueAttribute().getHandle(), temp, size);
+        if(error == BLE_ERROR_NONE) txBufferTail = txBufferHead;
+
+//        ble.gattServer().areUpdatesEnabled(*rxCharacteristic, &updatesEnabled);
     }
 
     return bytesWritten;

@@ -73,7 +73,6 @@ void TestBLEUartServiceDiscoverCharacteristics() {
 
     // we need to wait until we are fully disconnected or the host test will stall
     while (!config.isDisconnected) Thread::wait(100);
-    printf("DISCONNECTED\r\n");
 
     delete uartService;
 }
@@ -110,9 +109,41 @@ void TestBLEUartServiceReceiveData() {
     delete uartService;
 }
 
+void TestBLEUartServiceSendData() {
+    char k[48], v[128], expected[128];
+
+    BLEManager &bleManager = BLEManager::getInstance();
+    BLEConfigOnConnection config = BLEConfigOnConnection();
+
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(&config), "BLE manager init failed");
+    BLEUartService *uartService = new BLEUartService(BLE::Instance(), 128, 128);
+
+    // tell the host test to connect and wait for the message to be expected
+    greentea_send_kv("readdata", DEVICE_NAME);
+
+    for (int i = 0; i < 2; i++) {
+        greentea_parse_kv(k, expected, sizeof(k), sizeof(v));
+        TEST_ASSERT_EQUAL_STRING_MESSAGE("expect", k, "wrong response key received");
+
+        int sent = uartService->send(reinterpret_cast<const uint8_t *>(expected), static_cast<int>(strlen(expected)));
+        TEST_ASSERT_EQUAL_INT_MESSAGE(strlen(expected), sent, "could not send all data");
+
+        greentea_parse_kv(k, v, sizeof(k), sizeof(v));
+
+        // check that the message we expected has been received
+        TEST_ASSERT_EQUAL_STRING_MESSAGE("received", k, "wrong key received");
+        TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, v, "wrong message received");
+    }
+
+    // we need to wait until we are fully disconnected or the host test will stall
+    while (!config.isDisconnected) Thread::wait(100);
+
+    delete uartService;
+}
+
 utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
                                           const failure_t reason) {
-    printf("BLEManager::getInstance().deinit()");
+    printf("BLEManager::getInstance().deinit()\r\n");
     BLEManager::getInstance().deinit();
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
@@ -122,7 +153,7 @@ utest::v1::status_t greentea_failure_handler(const Case *const source, const fai
 }
 
 utest::v1::status_t greentea_test_setup(const size_t number_of_cases) {
-    GREENTEA_SETUP(20, "BLEUartServiceTests");
+    GREENTEA_SETUP(30, "BLEUartServiceTests");
     return verbose_test_setup_handler(number_of_cases);
 }
 
@@ -130,9 +161,11 @@ int main() {
     bleClockInit();
 
     Case cases[] = {
-    Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-uart-send", TestBLEUartServiceReceiveData,
+//    Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
+//         case_teardown_handler, greentea_failure_handler),
+//    Case("Test ble-uart-receive", TestBLEUartServiceReceiveData,
+//         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-uart-send", TestBLEUartServiceSendData,
          case_teardown_handler, greentea_failure_handler),
     };
 
