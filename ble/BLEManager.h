@@ -69,7 +69,7 @@ public:
      */
     ble_error_t init(BLEConfig *config = new BLEConfig());
 
-    ble_error_t init(const char *deviceName, const uint16_t advInterval = 10, const uint16_t advTimeout = 0);
+    ble_error_t init(const char *deviceName, uint16_t advInterval = 10, uint16_t advTimeout = 0);
 
     ble_error_t deinit();
 

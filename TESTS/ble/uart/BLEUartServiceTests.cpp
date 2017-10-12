@@ -161,10 +161,10 @@ int main() {
     bleClockInit();
 
     Case cases[] = {
-//    Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
-//         case_teardown_handler, greentea_failure_handler),
-//    Case("Test ble-uart-receive", TestBLEUartServiceReceiveData,
-//         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
+         case_teardown_handler, greentea_failure_handler),
+    Case("Test ble-uart-receive", TestBLEUartServiceReceiveData,
+         case_teardown_handler, greentea_failure_handler),
     Case("Test ble-uart-send", TestBLEUartServiceSendData,
          case_teardown_handler, greentea_failure_handler),
     };

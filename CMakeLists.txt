@@ -173,7 +173,8 @@ include_directories(${MBED_OS})
 
 add_library(ble
         ble/BLEManager.cpp
-        ble/services/BLEUartService.cpp)
+        ble/services/BLEUartService.cpp
+        )
 target_include_directories(ble PUBLIC ble)
 
 add_executable(ble-tests

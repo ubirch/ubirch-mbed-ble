@@ -28,19 +28,21 @@
 
 #define ASSERT(c, m) if(!(c)) {printf("assert(" m ")"); return;}
 
-static Thread bleEventThread(osPriorityNormal);
-static EventQueue bleEventQueue(4 * EVENTS_EVENT_SIZE);
+static Thread *bleEventThread;;
+static EventQueue *bleEventQueue;
 
 // BLE events processing
 static void scheduleBleEventsProcessing(BLE::OnEventsToProcessCallbackContext *context) {
-    bleEventQueue.call(Callback<void()>(&context->ble, &BLE::processEvents));
+    if(bleEventQueue) bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
 }
 
 
 BLEManager &BLEManager::getInstance() {
     static BLEManager *instance;
     if (!instance) {
-        bleEventThread.start(callback(&bleEventQueue, &EventQueue::dispatch_forever));
+        bleEventQueue = new EventQueue(4 * EVENTS_EVENT_SIZE);
+        bleEventThread = new Thread(osPriorityNormal);
+        bleEventThread->start(callback(&bleEventQueue, &EventQueue::dispatch_forever));
         instance = new BLEManager();
     }
     return *instance;
