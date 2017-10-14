@@ -54,7 +54,6 @@ class BLEUartServiceTests(BaseHostTest):
         # send the uuid to be expected via BLE, then send it
         self.send_kv("expect", self.device.services[0].UUID)
         c = peripheral["UART Profile"]["UART TX"]
-        c.debug(True)
         c.value = bytearray(self.device.services[0].UUID)
 
         # disconnect from peripheral
@@ -68,11 +67,6 @@ class BLEUartServiceTests(BaseHostTest):
         self.device = self.discoverDevice(name)
         self.device.delegate = Peripheral
         peripheral = self.cm.connectPeripheral(self.device)
-        print str(peripheral.keys())
-        for service in peripheral:
-            print str(service)
-            for c in service:
-                print str(c)
 
         # enable indicate and notify on the rx
         c = peripheral["UART Profile"]["UART RX"]

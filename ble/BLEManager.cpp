@@ -26,9 +26,8 @@
 #include <UARTService.h>
 #include "BLEManager.h"
 
-#define ASSERT(c, m) if(!(c)) {printf("assert(" m ")"); return;}
 
-static Thread *bleEventThread;;
+static Thread *bleEventThread;
 static EventQueue *bleEventQueue;
 
 // BLE events processing
@@ -36,13 +35,12 @@ static void scheduleBleEventsProcessing(BLE::OnEventsToProcessCallbackContext *c
     if(bleEventQueue) bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
 }
 
-
 BLEManager &BLEManager::getInstance() {
     static BLEManager *instance;
     if (!instance) {
         bleEventQueue = new EventQueue(4 * EVENTS_EVENT_SIZE);
         bleEventThread = new Thread(osPriorityNormal);
-        bleEventThread->start(callback(&bleEventQueue, &EventQueue::dispatch_forever));
+        bleEventThread->start(callback(bleEventQueue, &EventQueue::dispatch_forever));
         instance = new BLEManager();
     }
     return *instance;
@@ -50,41 +48,19 @@ BLEManager &BLEManager::getInstance() {
 
 void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     BLE &ble = params->ble;
-    error = params->error;
+    this->error = params->error;
 
-    if (params->ble.getInstanceID() != BLE::DEFAULT_INSTANCE) {
-        error = BLE_ERROR_INVALID_STATE;
+    if (!this->config || params->ble.getInstanceID() != BLE::DEFAULT_INSTANCE) {
+        this->error = BLE_ERROR_INVALID_STATE;
+        return;
     }
-    if (error != BLE_ERROR_NONE) return;
 
-    ble.gap().onConnection(config, &BLEConfig::onConnection);
-    ble.gap().onDisconnection(config, &BLEConfig::onDisconnection);
-    error = ble.gap().setAddress(BLEProtocol::AddressType::RANDOM_PRIVATE_RESOLVABLE, {0});
-    ASSERT(error == BLE_ERROR_NONE, "address type");
-
-    error = ble.gap().setDeviceName((uint8_t *) config->deviceName);
-    ASSERT(error == BLE_ERROR_NONE, "device name");
-
-    error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED |
-                                                   GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-    ASSERT(error == BLE_ERROR_NONE, "adv payload");
-
-    error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME,
-                                                   (uint8_t *) config->deviceName,
-                                                   static_cast<uint8_t>(strlen(config->deviceName)));
-    ASSERT(error == BLE_ERROR_NONE, "local name");
-    
-    ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().setAdvertisingInterval(config->advertisingInterval);
-    ble.gap().setAdvertisingTimeout(config->advertisingTimeout);
-    error = ble.gap().startAdvertising();
-    ASSERT(error == BLE_ERROR_NONE, "start adv");
-    
-    isInitialized = true;
+    this->error = this->config->onInit(ble);
+    this->isInitialized = (error == BLE_ERROR_NONE);
 }
 
 ble_error_t BLEManager::init(BLEConfig *config) {
-    if(isInitialized) BLE_ERROR_INVALID_STATE;
+    if(isInitialized) return BLE_ERROR_INVALID_STATE;
 
     this->config = config;
 

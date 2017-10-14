@@ -26,28 +26,7 @@
 #define UBIRCH_MBED_BLE_BLEMANAGER_H
 
 #include <BLE.h>
-
-class BLEConfig {
-public:
-    const char *deviceName;
-    uint16_t advertisingInterval;
-    uint16_t advertisingTimeout;
-
-    explicit BLEConfig(const char *deviceName = "BLEDEVICE",
-                       uint16_t advertisingInterval = 10,
-                       uint16_t advertisingTimeout = 0) {
-        this->deviceName = deviceName;
-        this->advertisingInterval = advertisingInterval;
-        this->advertisingTimeout = advertisingTimeout;
-    }
-
-    virtual void onConnection(const Gap::ConnectionCallbackParams_t *params) {};
-
-    virtual void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
-        // restart advertising if connection is lost
-        BLE::Instance().gap().startAdvertising();
-    }
-};
+#include <BLEConfig.h>
 
 class BLEManager {
 public:
@@ -56,10 +35,6 @@ public:
      * @return a single instance reference.
      */
     static BLEManager &getInstance();
-
-    ~BLEManager() {
-        BLE::Instance().shutdown();
-    };
 
     /**
      * The actual initialization of the BLE instance.
@@ -78,6 +53,10 @@ protected:
         config = NULL;
         error = BLE_ERROR_NONE;
         isInitialized = false;
+    };
+
+    ~BLEManager() {
+        BLE::Instance().shutdown();
     };
 
     void _init(BLE::InitializationCompleteCallbackContext *params);

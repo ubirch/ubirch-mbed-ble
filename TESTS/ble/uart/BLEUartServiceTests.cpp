@@ -39,18 +39,16 @@ using namespace utest::v1;
 class BLEConfigOnConnection : public BLEConfig {
 
 public:
-    bool isDisconnected;
+    bool isConnected;
 
-    explicit BLEConfigOnConnection(const char *name = DEVICE_NAME) : BLEConfig(name) {
-        isDisconnected = true;
-    }
+    explicit BLEConfigOnConnection(const char *name = DEVICE_NAME) : BLEConfig(name), isConnected(false) {}
 
-    void onConnection(const Gap::ConnectionCallbackParams_t *params) override {
-        isDisconnected = false;
+    void onConnection(const Gap::ConnectionCallbackParams_t *params) {
+        isConnected = true;
     }
 
     void onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
-        isDisconnected = true;
+        isConnected = false;
     }
 };
 
@@ -72,7 +70,7 @@ void TestBLEUartServiceDiscoverCharacteristics() {
     TEST_ASSERT_EQUAL_STRING_MESSAGE("6E400003-B5A3-F393-E0A9-E50E24DCCA9E", v, "RX UUID does not match");
 
     // we need to wait until we are fully disconnected or the host test will stall
-    while (!config.isDisconnected) Thread::wait(100);
+    while (config.isConnected) Thread::wait(100);
 
     delete uartService;
 }
@@ -104,7 +102,7 @@ void TestBLEUartServiceReceiveData() {
     TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, v, "wrong message received");
 
     // we need to wait until we are fully disconnected or the host test will stall
-    while (!config.isDisconnected) Thread::wait(100);
+    while (config.isConnected) Thread::wait(100);
 
     delete uartService;
 }
@@ -136,19 +134,19 @@ void TestBLEUartServiceSendData() {
     }
 
     // we need to wait until we are fully disconnected or the host test will stall
-    while (!config.isDisconnected) Thread::wait(100);
+    while (config.isConnected) Thread::wait(100);
 
     delete uartService;
 }
 
 utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
-                                          const failure_t reason) {
+                                          const failure_t reason) { // NOLINT
     printf("BLEManager::getInstance().deinit()\r\n");
     BLEManager::getInstance().deinit();
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
 
-utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) {
+utest::v1::status_t greentea_failure_handler(const Case *const source, const failure_t reason) { // NOLINT
     return greentea_case_failure_abort_handler(source, reason);
 }
 
@@ -161,12 +159,12 @@ int main() {
     bleClockInit();
 
     Case cases[] = {
-    Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-uart-receive", TestBLEUartServiceReceiveData,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-uart-send", TestBLEUartServiceSendData,
-         case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-uart-discover", TestBLEUartServiceDiscoverCharacteristics,
+                 case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-uart-receive", TestBLEUartServiceReceiveData,
+                 case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-uart-send", TestBLEUartServiceSendData,
+                 case_teardown_handler, greentea_failure_handler),
     };
 
     Specification specification(greentea_test_setup, cases, greentea_test_teardown_handler);

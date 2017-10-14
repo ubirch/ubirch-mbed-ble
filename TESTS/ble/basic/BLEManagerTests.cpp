@@ -24,8 +24,8 @@
  */
 
 #include <sdk_common.h>
+#include <SecurityManager.h>
 #include <BLEManager.h>
-#include "mbed.h"
 
 #include "utest/utest.h"
 #include "unity/unity.h"
@@ -91,17 +91,18 @@ void TestBLEManagerOnCallbacks() {
     greentea_send_kv("connect", config.deviceName);
 
     greentea_parse_kv(k, v, sizeof(k), sizeof(v));
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("connected", k, "wrong key received");
+    TEST_ASSERT_EQUAL_STRING("connected", k);
     TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device connected");
 
     greentea_parse_kv(k, v, sizeof(k), sizeof(v));
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("disconnected", k, "wrong key received");
+    TEST_ASSERT_EQUAL_STRING("disconnected", k);
     TEST_ASSERT_EQUAL_STRING_MESSAGE("OK", v, "wrong device disconnected");
 }
 
 utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
                                           const failure_t reason) {
-    printf("BLEManager::getInstance().deinit()");
+    printf("BLEManager::getInstance().deinit()\r\n");
+    BLE::Instance().purgeAllBondingState();
     BLEManager::getInstance().deinit();
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
@@ -112,7 +113,7 @@ utest::v1::status_t greentea_failure_handler(const Case *const source, const fai
 }
 
 utest::v1::status_t greentea_test_setup(const size_t number_of_cases) {
-    GREENTEA_SETUP(60, "BLEManagerTests");
+    GREENTEA_SETUP(300, "BLEManagerTests");
     return verbose_test_setup_handler(number_of_cases);
 }
 
@@ -120,14 +121,14 @@ int main() {
     bleClockInit();
 
     Case cases[] = {
-    Case("Test ble-singleton", TestBLEUartServiceDiscoverCharacteristics,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-init", TestBLEManagerInit,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-advertise", TestBLEManagerAdvertising,
-         case_teardown_handler, greentea_failure_handler),
-    Case("Test ble-on-callbacks", TestBLEManagerOnCallbacks,
-         case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-singleton", TestBLEUartServiceDiscoverCharacteristics,
+                 case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-init", TestBLEManagerInit,
+                 case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-advertise", TestBLEManagerAdvertising,
+                 case_teardown_handler, greentea_failure_handler),
+            Case("Test ble-on-callbacks", TestBLEManagerOnCallbacks,
+                 case_teardown_handler, greentea_failure_handler),
     };
 
     Specification specification(greentea_test_setup, cases, greentea_test_teardown_handler);
