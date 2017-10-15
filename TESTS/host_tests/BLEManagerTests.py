@@ -16,10 +16,11 @@ class BLEManagerTests(BaseHostTest):
         BaseHostTest.__init__(self)
 
     def discoverDevice(self, name):
-        if not self.cm .ready:
+        self.log("** [B] discoverDevice(" + name + ")")
+        if not self.cm.ready:
             return
-        for i in xrange(5):
-            target = self.cm.startScan()
+        self.cm.startScan(timeout=20)
+        for target in self.cm.scanedList:
             if target and target.name == name:
                 return target
         raise Exception("NO DEVICE FOUND")

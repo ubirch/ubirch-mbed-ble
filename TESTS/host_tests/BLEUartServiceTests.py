@@ -19,13 +19,12 @@ class BLEUartServiceTests(BaseHostTest):
         self.log("** [U] discoverDevice(" + name + ")")
         if not self.cm.ready:
             return
-        try:
-            target = self.cm.startScan(timeout=10)
+        self.cm.startScan(timeout=20)
+        for target in self.cm.scanedList:
             if target and target.name == name:
                 return target
-        finally:
-            self.cm.stopScan()
         raise Exception("NO DEVICE FOUND")
+
 
     @event_callback("discover")
     def __discover(self, key, name, timestamp):
@@ -84,7 +83,6 @@ class BLEUartServiceTests(BaseHostTest):
 
         # disconnect from peripheral
         self.cm.disconnectPeripheral(self.device)
-
 
 class GenericProfileHandler(DefaultProfileHandler):
     UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"

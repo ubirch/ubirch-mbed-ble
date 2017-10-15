@@ -190,7 +190,7 @@ add_custom_target(run-tests ALL
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(debug-tests ALL
-        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart* -vv --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart*,tests-ble-security* -vv --profile mbed-os/tools/profiles/debug.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(compile-debug-tests ALL
