@@ -40,19 +40,35 @@ public:
      * The actual initialization of the BLE instance.
      *
      * @param deviceName the name of  the BLE device for advertisement
-     * @return if the initialization was successful
+     * @returns BLE_ERROR_NONE if the initialization was successful
+     * @returns BLE_ERROR_ALDREADY_INITIALIZED if this instance is configured
+     * @returns BLE_ERROR_* for any other BLE related errors
      */
     ble_error_t init(BLEConfig *config = new BLEConfig());
 
+    /**
+     * Initialize the BLE instance and configure services using the config.
+     * @param deviceName the device name to use
+     * @param advInterval the advertising interval to use
+     * @param advTimeout how long to advertise until low power mode
+     * @returns BLE_ERROR_NONE if the initialization was successful
+     * @returns BLE_ERROR_ALDREADY_INITIALIZED if this instance is configured
+     * @returns BLE_ERROR_* for any other BLE related errors
+     */
     ble_error_t init(const char *deviceName, uint16_t advInterval = 10, uint16_t advTimeout = 0);
 
+    /**
+     * De-initialize the BLE instance, remove services and shutdown BLE.
+     * @returns BLE_ERROR_NONE if the shutdown was successful
+     * @returns BLE_ERROR_* for any other BLE related errors
+     */
     ble_error_t deinit();
 
 protected:
     BLEManager() {
         config = NULL;
-        error = BLE_ERROR_NONE;
         isInitialized = false;
+        error = BLE_ERROR_NONE;
     };
 
     ~BLEManager() {

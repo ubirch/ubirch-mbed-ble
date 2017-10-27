@@ -32,7 +32,7 @@ static EventQueue *bleEventQueue;
 
 // BLE events processing
 static void scheduleBleEventsProcessing(BLE::OnEventsToProcessCallbackContext *context) {
-    if(bleEventQueue) bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
+    if (bleEventQueue) bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
 }
 
 BLEManager &BLEManager::getInstance() {
@@ -60,11 +60,11 @@ void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
 }
 
 ble_error_t BLEManager::init(BLEConfig *config) {
-    if(isInitialized) return BLE_ERROR_INVALID_STATE;
+    if (isInitialized) return BLE_ERROR_ALREADY_INITIALIZED;
 
     this->config = config;
 
-    BLE& ble = BLE::Instance();
+    BLE &ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(this, &BLEManager::_init);
 
@@ -74,13 +74,13 @@ ble_error_t BLEManager::init(BLEConfig *config) {
 }
 
 ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval, const uint16_t advTimeout) {
-    if(!isInitialized) return init(new BLEConfig(deviceName, advInterval, advTimeout));
-    return BLE_ERROR_INVALID_STATE;
+    return init(new BLEConfig(deviceName, advInterval, advTimeout));
 }
 
 ble_error_t BLEManager::deinit() {
-    if(isInitialized) {
+    if (isInitialized) {
         isInitialized = false;
+        delete config;
         return BLE::Instance().shutdown();
     }
     return BLE_ERROR_NONE;
