@@ -51,6 +51,8 @@ public:
     explicit BLEConfig(const char *deviceName = "BLEDEVICE",
                        uint16_t advertisingInterval = 10, uint16_t advertisingTimeout = 0);
 
+    virtual ~BLEConfig() {};
+
     virtual ble_error_t onInit(BLE& ble);
 
     virtual void onConnection(const Gap::ConnectionCallbackParams_t *params);;
