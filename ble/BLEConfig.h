@@ -33,8 +33,10 @@
 #include <cstdio>
 
 // for debugging purposes, get a message what went wrong
+#ifndef PRINTF
 #define PRINTF printf
-#define BLE_ASSERT(c, m) {if((c) != BLE_ERROR_NONE) {PRINTF("assert(" m ")"); return c;}}
+#endif
+#define BLE_ASSERT(c, m) {if((c) != BLE_ERROR_NONE) {PRINTF("assert(" m ")=%d\r\n", c); return c;}}
 
 class BLEConfig {
 public:
