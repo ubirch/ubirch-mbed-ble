@@ -103,10 +103,7 @@ void TestBLEManagerOnCallbacks() {
 utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
                                           const failure_t reason) {
     printf("BLEManager::getInstance().deinit()\r\n");
-    //BLE::Instance().purgeAllBondingState();
-    printf("1\r\n");
     BLEManager::getInstance().deinit();
-    printf("2\r\n");
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
 
