@@ -43,10 +43,11 @@ void TestBLEUartServiceDiscoverCharacteristics() {
 }
 
 void TestBLEManagerInit() {
+    BLEConfig config;
     BLEManager &bleManager = BLEManager::getInstance();
     printf("init::BLEManager[%p]\r\n", &bleManager);
 
-    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(), "BLE manager initialization failed");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.init(&config), "BLE manager initialization failed");
     TEST_ASSERT_EQUAL_INT_MESSAGE(BLE_ERROR_NONE, bleManager.deinit(), "BLE deinit failed");
 }
 
@@ -102,8 +103,10 @@ void TestBLEManagerOnCallbacks() {
 utest::v1::status_t case_teardown_handler(const Case *const source, const size_t passed, const size_t failed,
                                           const failure_t reason) {
     printf("BLEManager::getInstance().deinit()\r\n");
-    BLE::Instance().purgeAllBondingState();
+    //BLE::Instance().purgeAllBondingState();
+    printf("1\r\n");
     BLEManager::getInstance().deinit();
+    printf("2\r\n");
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
 

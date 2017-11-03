@@ -44,7 +44,7 @@ public:
      * @returns BLE_ERROR_ALDREADY_INITIALIZED if this instance is configured
      * @returns BLE_ERROR_* for any other BLE related errors
      */
-    ble_error_t init(BLEConfig *config = new BLEConfig());
+    ble_error_t init(BLEConfig *config);
 
     /**
      * Initialize the BLE instance and configure services using the config.

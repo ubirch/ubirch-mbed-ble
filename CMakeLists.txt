@@ -186,13 +186,13 @@ add_executable(ble-tests
 target_link_libraries(ble-tests mbed-os ble)
 
 add_custom_target(run-tests ALL
-        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart*
+        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart* --app-config TESTS/settings.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(debug-tests ALL
-        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart*,tests-ble-security* -vv --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble-basic*,tests-ble-uart*,tests-ble-security* -vv --profile mbed-os/tools/profiles/debug.json --app-config TESTS/settings.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(compile-debug-tests ALL
-        COMMAND mbed test -n tests-ble* --compile --profile mbed-os/tools/profiles/debug.json
+        COMMAND mbed test -n tests-ble* --compile --profile mbed-os/tools/profiles/debug.json --app-config TESTS/settings.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

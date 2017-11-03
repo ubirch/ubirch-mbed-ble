@@ -80,7 +80,6 @@ ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval,
 ble_error_t BLEManager::deinit() {
     if (isInitialized) {
         isInitialized = false;
-        delete config;
         return BLE::Instance().shutdown();
     }
     return BLE_ERROR_NONE;

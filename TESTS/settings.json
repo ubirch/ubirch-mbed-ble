@@ -1,0 +1,8 @@
+{
+  "target_overrides": {
+    "*": {
+      "platform.stdio-flush-at-exit": false,
+      "target.uart_hwfc": 0
+    }
+  }
+}
