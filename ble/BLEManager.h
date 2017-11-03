@@ -64,10 +64,16 @@ public:
      */
     ble_error_t deinit();
 
+    /**
+     * Check if this instance has already been initialized.
+     * @returns the status of the initialization
+     */
+    bool isInitialized();
+
 protected:
     BLEManager() {
         config = NULL;
-        isInitialized = false;
+        initialized = false;
         error = BLE_ERROR_NONE;
     };
 
@@ -79,8 +85,9 @@ protected:
 
 private:
     BLEConfig *config;
-    bool isInitialized;
+    bool initialized;
     ble_error_t error;
+
 };
 
 

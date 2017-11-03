@@ -46,6 +46,10 @@ BLEManager &BLEManager::getInstance() {
     return *instance;
 }
 
+bool BLEManager::isInitialized() {
+    return initialized;
+}
+
 void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     BLE &ble = params->ble;
     this->error = params->error;
@@ -56,11 +60,11 @@ void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     }
 
     this->error = this->config->onInit(ble);
-    this->isInitialized = (error == BLE_ERROR_NONE);
+    this->initialized = (error == BLE_ERROR_NONE);
 }
 
 ble_error_t BLEManager::init(BLEConfig *config) {
-    if (isInitialized) return BLE_ERROR_ALREADY_INITIALIZED;
+    if (initialized) return BLE_ERROR_ALREADY_INITIALIZED;
 
     this->config = config;
 
@@ -68,7 +72,7 @@ ble_error_t BLEManager::init(BLEConfig *config) {
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(this, &BLEManager::_init);
 
-    while (!isInitialized && error == BLE_ERROR_NONE) /* wait for initialization done or error state */;
+    while (!initialized && error == BLE_ERROR_NONE) /* wait for initialization done or error state */;
 
     return error;
 }
@@ -78,8 +82,8 @@ ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval,
 }
 
 ble_error_t BLEManager::deinit() {
-    if (isInitialized) {
-        isInitialized = false;
+    if (initialized) {
+        initialized = false;
         return BLE::Instance().shutdown();
     }
     return BLE_ERROR_NONE;
