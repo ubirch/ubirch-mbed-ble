@@ -60,7 +60,7 @@ ble_error_t BLEConfig::onInit(BLE &ble) {
     ble.gap().setAdvertisingInterval(this->advertisingInterval);
     ble.gap().setAdvertisingTimeout(this->advertisingTimeout);
 
-    return ble.gap().startAdvertising();
+    return error;
 }
 
 void BLEConfig::onConnection(const Gap::ConnectionCallbackParams_t *params) {}
@@ -69,4 +69,8 @@ void BLEConfig::onDisconnection(const Gap::DisconnectionCallbackParams_t *params
     // restart advertising if connection is lost
     BLE::Instance().gap().startAdvertising();
 }
+
+void BLEConfig::startAdvertising() {}
+
+void BLEConfig::stopAdvertising() {}
 
