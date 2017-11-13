@@ -1,6 +1,7 @@
 from mbed_host_tests import BaseHostTest, event_callback
-from pyble import CentralManager
-from pyble.handlers import PeripheralHandler, ProfileHandler, DefaultProfileHandler
+from ubirch.ble_platform import get_scanner, get_manager
+import time
+
 
 class BLEUartServiceTests(BaseHostTest):
     """
@@ -12,18 +13,18 @@ class BLEUartServiceTests(BaseHostTest):
 
     def __init__(self):
         self.log("** " + str(self))
-        self.cm = CentralManager()
+        self.sm = get_scanner()
         BaseHostTest.__init__(self)
+
+        self.adapter = ""
+        self.addressType = "random"
+        self.securityLevel = "low"
+        self.createRequester = False
+
 
     def discoverDevice(self, name):
         self.log("** [U] discoverDevice(" + name + ")")
-        if not self.cm.ready:
-            return
-        self.cm.startScan(timeout=20)
-        for target in self.cm.scanedList:
-            if target and target.name == name:
-                return target
-        raise Exception("NO DEVICE FOUND")
+        return self.sm.getDeviceAddress(name, 5)
 
 
     @event_callback("discover")
@@ -31,15 +32,16 @@ class BLEUartServiceTests(BaseHostTest):
         self.log("** [U] " + key + "(" + name + ")")
 
         # discover characteristics in peripheral
-        self.device = self.discoverDevice(name)
-        self.device.delegate = Peripheral
-        peripheral = self.cm.connectPeripheral(self.device)
-        for service in peripheral:
-            for c in service:
-                self.send_kv(c.name, c.UUID)
+        self.device  = self.discoverDevice(name)
+        self.cm = get_manager(self.device, self.adapter, self.addressType, self.securityLevel, self.createRequester)
+        self.cm.connectDevice()
+        peripheral = self.cm.discoverCharacteristics()
+        for c in peripheral:
+            self.send_kv('hello', c.upper())
+            time.sleep(0.5)
 
         # disconnect from peripheral
-        self.cm.disconnectPeripheral(self.device)
+        self.cm.disconnectDevice()
 
     @event_callback("writedata")
     def __writedata(self, key, name, timestamp):
@@ -47,16 +49,17 @@ class BLEUartServiceTests(BaseHostTest):
 
         # discover, setup and connect to remote device
         self.device = self.discoverDevice(name)
-        self.device.delegate = Peripheral
-        peripheral = self.cm.connectPeripheral(self.device)
+        self.cm = get_manager(self.device, self.adapter, self.addressType, self.securityLevel, self.createRequester)
+        self.cm.connectDevice()
+        peripheral = self.cm.discoverCharacteristics()
 
         # send the uuid to be expected via BLE, then send it
-        self.send_kv("expect", self.device.services[0].UUID)
-        c = peripheral["UART Profile"]["UART TX"]
-        c.value = bytearray(self.device.services[0].UUID)
+        self.send_kv("expect", peripheral[0])
+        # TODO get the handle from discoverService function
+        self.cm.write(0xe, peripheral[0])
 
         # disconnect from peripheral
-        self.cm.disconnectPeripheral(self.device)
+        self.cm.disconnectDevice()
 
     @event_callback("readdata")
     def __readdata(self, key, name, timestamp):
@@ -64,63 +67,68 @@ class BLEUartServiceTests(BaseHostTest):
 
         # discover, setup and connect to remote device
         self.device = self.discoverDevice(name)
-        self.device.delegate = Peripheral
-        peripheral = self.cm.connectPeripheral(self.device)
-
-        # enable indicate and notify on the rx
-        c = peripheral["UART Profile"]["UART RX"]
-        c.notify = True
+        self.cm = get_manager(self.device, self.adapter, self.addressType, self.securityLevel, self.createRequester)
+        self.cm.connectDevice()
+        peripheral = self.cm.discoverCharacteristics()
 
         # send the uuid to be expected via BLE, then wait for it
-        self.send_kv("expect", self.device.services[0].UUID)
-        self.cm.loop(5)
-        self.send_kv("received", c.value)
+        self.send_kv("expect", peripheral[0])
+        time.sleep(0.5)
+        # TODO get the handle from discoverService function
+        c = self.cm.read(0x10)
+        self.send_kv("received", c[0])
 
         # try again
-        self.send_kv("expect", self.device.services[0].UUID)
-        self.cm.loop(5)
-        self.send_kv("received", c.value)
+        self.send_kv("expect", peripheral[0])
+        time.sleep(0.5)
+        # TODO get the handle from discoverService function
+        c2 = self.cm.read(0x10)
+
+        # TODO Fix the buffer issue with blesuite
+        c2 = c2[0][:len(c[0])]
+        self.send_kv("received", c2)
 
         # disconnect from peripheral
-        self.cm.disconnectPeripheral(self.device)
-
-class GenericProfileHandler(DefaultProfileHandler):
-    UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-    _AUTOLOAD = True
-    names = {
-        "6E400001-B5A3-F393-E0A9-E50E24DCCA9E": "UART Profile",
-        "6E400002-B5A3-F393-E0A9-E50E24DCCA9E": "UART TX",
-        "6E400003-B5A3-F393-E0A9-E50E24DCCA9E": "UART RX"
-    }
-
-    def initialize(self):
-        print "init"
-        pass
-
-    def on_write(self, characteristic, data):
-        print "** write(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
+        self.cm.disconnectDevice()
 
 
-    def on_read(self, characteristic, data):
-        print "** read(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
-
-    def on_notify(self, characteristic, data):
-        print "** notify(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
-
-
-class Peripheral(PeripheralHandler):
-    def initialize(self):
-        self.addProfileHandler(GenericProfileHandler)
-        pass
-
-    def on_connect(self):
-        print "** connect(", self.peripheral, ")"
-        pass
-
-    def on_disconnect(self):
-        print "** disconnect(", self.peripheral, ")"
-        pass
-
-    def on_rssi(self, value):
-        print "** updateRSSI(", self.peripheral, ",", value, ")"
-        pass
+# class GenericProfileHandler(DefaultProfileHandler):
+#     UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
+#     _AUTOLOAD = True
+#     names = {
+#         "6E400001-B5A3-F393-E0A9-E50E24DCCA9E": "UART Profile",
+#         "6E400002-B5A3-F393-E0A9-E50E24DCCA9E": "UART TX",
+#         "6E400003-B5A3-F393-E0A9-E50E24DCCA9E": "UART RX"
+#     }
+#
+#     def initialize(self):
+#         print "init"
+#         pass
+#
+#     def on_write(self, characteristic, data):
+#         print "** write(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
+#
+#
+#     def on_read(self, characteristic, data):
+#         print "** read(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
+#
+#     def on_notify(self, characteristic, data):
+#         print "** notify(" + str(characteristic.UUID) + "): '"+("".join(data))+"'"
+#
+#
+# class Peripheral(PeripheralHandler):
+#     def initialize(self):
+#         self.addProfileHandler(GenericProfileHandler)
+#         pass
+#
+#     def on_connect(self):
+#         print "** connect(", self.peripheral, ")"
+#         pass
+#
+#     def on_disconnect(self):
+#         print "** disconnect(", self.peripheral, ")"
+#         pass
+#
+#     def on_rssi(self, value):
+#         print "** updateRSSI(", self.peripheral, ",", value, ")"
+#         pass

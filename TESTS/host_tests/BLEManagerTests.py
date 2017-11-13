@@ -1,6 +1,7 @@
 from mbed_host_tests import BaseHostTest, event_callback
-from pyble import CentralManager
 from pyble.handlers import DefaultProfileHandler, PeripheralHandler
+
+from ubirch.ble_platform import get_scanner, get_manager
 
 
 class BLEManagerTests(BaseHostTest):
@@ -12,42 +13,51 @@ class BLEManagerTests(BaseHostTest):
     """
 
     def __init__(self):
-        self.cm = CentralManager()
+        self.log("** " + str(self))
+        self.sm = get_scanner()
         BaseHostTest.__init__(self)
 
+        # address = test_basic()
+        self.adapter = ""
+        self.addressType = "random"
+        self.securityLevel = "low"
+        self.createRequester = False
+
     def discoverDevice(self, name):
-        self.log("** [B] discoverDevice(" + name + ")")
-        if not self.cm.ready:
-            return
-        self.cm.startScan(timeout=20)
-        for target in self.cm.scanedList:
-            if target and target.name == name:
-                return target
-        raise Exception("NO DEVICE FOUND")
+            self.log("** [B] discoverDevice(" + name + ")")
+            return self.sm.getDeviceAddress(name, 5)
 
     @event_callback("discover")
     def __discover(self, key, value, timestamp):
         self.log("** [B] " + key + "(" + value + ")")
-        device = self.discoverDevice(value)
-        self.send_kv("discovered", device.name.encode("latin-1"))
+
+        # TODO return device name for linux devices
+        d = self.discoverDevice(value)
+        if d:
+            self.send_kv("discovered", value.encode("latin-1"))
+        else:
+            self.send_kv("discovered", "NONE")
+
 
     @event_callback("connect")
     def __connect(self, key, value, timestamp):
         self.log("** [B] " + key + "(" + value + ")")
         self.device = self.discoverDevice(value)
-        self.cm.connectPeripheral(self.device)
+        self.cm = get_manager(self.device, self.adapter, self.addressType, self.securityLevel, self.createRequester)
+        self.cm.connectDevice()
 
     @event_callback("connected")
     def __connected(self, key, value, timestamp):
         self.log("** [B] " + key + "(" + value + ")")
         self.send_kv("connected", value)
-        self.cm.disconnectPeripheral(self.device)
+        self.cm.disconnectDevice()
 
     @event_callback("disconnected")
     def __disconnected(self, key, value, timestamp):
         self.log("** [B] " + key + "(" + value + ")")
         self.send_kv("disconnected", value)
 
+    # TODO implement secure BLE
     @event_callback("connect_secure")
     def __connect_secure(self, key, value, timestamp):
         self.log("** [B] " + key + "(" + value + ")")

@@ -10,13 +10,26 @@ mbed add https://github.com/ubirch/ubirch-mbed-ble
 
 > The host tests require a host BLE adapter to receive data and discover devices.
 
-### Prerequisites
+## Prerequisites
+
+### Mac-OS
 
 - [Python BLE Wrapper](https://github.com/brettchien/PyBLEWrapper)
     ```
     pip install -U git+https://github.com/brettchien/PyBLEWrapper.git
     ```
 
+### Linux
+
+- [bluepy](https://github.com/IanHarvey/bluepy)
+- [BLESuite](https://github.com/nccgroup/BLESuite)
+
+
+## Installing ubirch-ble-tool 
+
+run ```pip install -U git+https://github.com/ubirch/ubirch-ble-tool.git```
+
+## Running tests
 ```bash
 mbed new .
 mbed target NRF52_DK
