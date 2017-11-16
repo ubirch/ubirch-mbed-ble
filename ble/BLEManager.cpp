@@ -50,6 +50,10 @@ bool BLEManager::isInitialized() {
     return initialized;
 }
 
+bool BLEManager::isConnected() {
+    BLE::Instance().gap().getState().connected;
+}
+
 void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
     BLE &ble = params->ble;
     this->error = params->error;

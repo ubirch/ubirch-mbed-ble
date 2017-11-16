@@ -70,6 +70,13 @@ public:
      */
     bool isInitialized();
 
+    /**
+     * Check if this instance is currently connected.
+     * @returns the status of the connectivity
+     */
+    bool isConnected();
+
+
 protected:
     BLEManager() {
         config = NULL;
@@ -87,7 +94,6 @@ private:
     BLEConfig *config;
     bool initialized;
     ble_error_t error;
-
 };
 
 

@@ -57,7 +57,7 @@ public:
 
     virtual ble_error_t onInit(BLE& ble);
 
-    virtual void onConnection(const Gap::ConnectionCallbackParams_t *params);;
+    virtual void onConnection(const Gap::ConnectionCallbackParams_t *params);
 
     virtual void onDisconnection(const Gap::DisconnectionCallbackParams_t *params);
 };
