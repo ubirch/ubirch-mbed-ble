@@ -51,7 +51,7 @@ bool BLEManager::isInitialized() {
 }
 
 bool BLEManager::isConnected() {
-    BLE::Instance().gap().getState().connected;
+    return BLE::Instance().gap().getState().connected;
 }
 
 void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
