@@ -4,6 +4,8 @@
 
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_C_COMPILER_WORKS TRUE)
+set(CMAKE_CXX_COMPILER_WORKS TRUE)
 
 project(ubirch-mbed-ble C CXX)
 set(CMAKE_CXX_STANDARD 98)
