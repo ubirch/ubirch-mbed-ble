@@ -67,6 +67,6 @@ void BLEConfig::onConnection(const Gap::ConnectionCallbackParams_t *params) {}
 
 void BLEConfig::onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
     // restart advertising if connection is lost
-    BLE::Instance().gap().startAdvertising();
+    //BLE::Instance().gap().startAdvertising();
 }
 
