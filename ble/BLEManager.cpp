@@ -23,8 +23,8 @@
  * ```
  */
 #include <rtos.h>
-#include <UARTService.h>
 #include "BLEManager.h"
+#include "mbed.h"
 
 
 static Thread *bleEventThread;
