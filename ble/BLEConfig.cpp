@@ -38,8 +38,7 @@ BLEConfig::BLEConfig(const char *deviceName, uint16_t advertisingInterval, uint1
 ble_error_t BLEConfig::onInit(BLE &ble) {
     ble_error_t error;
 
-    ble.gap().onConnection(this, &BLEConfig::onConnection);
-    ble.gap().onDisconnection(this, &BLEConfig::onDisconnection);
+    ble.gap().setEventHandler(this);        //TODO this should be in DeviceBLEConfig ?
 
 //    error = ble.gap().setAddress(BLEProtocol::AddressType::RANDOM_PRIVATE_RESOLVABLE, {0});
 //    BLE_ASSERT(error, "address type");
@@ -63,9 +62,9 @@ ble_error_t BLEConfig::onInit(BLE &ble) {
     return ble.gap().startAdvertising();
 }
 
-void BLEConfig::onConnection(const Gap::ConnectionCallbackParams_t *params) {}
+void BLEConfig::onConnectionComplete(const ble::ConnectionCompleteEvent &event) {}
 
-void BLEConfig::onDisconnection(const Gap::DisconnectionCallbackParams_t *params) {
+void BLEConfig::onDisconnectionComplete(const ble::DisconnectionCompleteEvent &event) {
     // restart advertising if connection is lost
     BLE::Instance().gap().startAdvertising();
 }

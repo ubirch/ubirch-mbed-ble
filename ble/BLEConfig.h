@@ -29,7 +29,8 @@
 #ifndef UBIRCH_MBED_BLE_BLECONFIG_H
 #define UBIRCH_MBED_BLE_BLECONFIG_H
 
-#include <BLE.h>
+#include <ble/BLE.h>
+#include <Events.h>
 #include <cstdio>
 
 // for debugging purposes, get a message what went wrong
@@ -38,7 +39,7 @@
 #endif
 #define BLE_ASSERT(c, m) {if((c) != BLE_ERROR_NONE) {PRINTF("assert(" m ")=%d\r\n", c); return c;}}
 
-class BLEConfig {
+class BLEConfig : ble::Gap::EventHandler {
 public:
     const char *deviceName;
     uint16_t advertisingInterval;
@@ -57,9 +58,9 @@ public:
 
     virtual ble_error_t onInit(BLE& ble);
 
-    virtual void onConnection(const Gap::ConnectionCallbackParams_t *params);
+    virtual void onConnectionComplete(const ble::ConnectionCompleteEvent &event);
 
-    virtual void onDisconnection(const Gap::DisconnectionCallbackParams_t *params);
+    virtual void onDisconnectionComplete(const ble::DisconnectionCompleteEvent &event);
 };
 
 
