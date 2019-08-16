@@ -55,7 +55,7 @@ public:
      * @returns BLE_ERROR_ALDREADY_INITIALIZED if this instance is configured
      * @returns BLE_ERROR_* for any other BLE related errors
      */
-    ble_error_t init(const char *deviceName, uint16_t advInterval = 10, uint16_t advTimeout = 0);
+//    ble_error_t init(const char *deviceName, uint16_t advInterval = 10, uint16_t advTimeout = 0);
 
     /**
      * De-initialize the BLE instance, remove services and shutdown BLE.
@@ -81,6 +81,7 @@ protected:
     BLEManager() {
         config = NULL;
         initialized = false;
+        connected = false;
         error = BLE_ERROR_NONE;
     };
 
@@ -88,11 +89,12 @@ protected:
         BLE::Instance().shutdown();
     };
 
-    void _init(BLE::InitializationCompleteCallbackContext *params);
+    void on_init_complete(BLE::InitializationCompleteCallbackContext *params);
 
 private:
     BLEConfig *config;
     bool initialized;
+    bool connected;
     ble_error_t error;
 };
 

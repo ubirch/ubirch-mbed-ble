@@ -23,6 +23,7 @@
  * ```
  */
 #include <rtos.h>
+#include <edebug.h>
 #include "BLEManager.h"
 #include "mbed.h"
 
@@ -54,17 +55,29 @@ bool BLEManager::isConnected() {
     return BLE::Instance().gap().getState().connected;
 }
 
-void BLEManager::_init(BLE::InitializationCompleteCallbackContext *params) {
+void BLEManager::on_init_complete(BLE::InitializationCompleteCallbackContext *params) {
     BLE &ble = params->ble;
     this->error = params->error;
 
+    EDEBUG_PRINTF("(BLE::InitializationCompleteCallback\r\n");
+
+    if (this->error) {
+        EDEBUG_PRINTF("Error during the initialisation\r\n");
+        return;
+    }
+
     if (!this->config || params->ble.getInstanceID() != BLE::DEFAULT_INSTANCE) {
         this->error = BLE_ERROR_INVALID_STATE;
+        EDEBUG_PRINTF("BLE_ERROR_INVALID_STATE\r\n");
         return;
     }
 
     this->error = this->config->onInit(ble);
-    this->initialized = (error == BLE_ERROR_NONE);
+
+    if (error == BLE_ERROR_NONE) {
+        EDEBUG_PRINTF("BLE initialized.\r\n");
+        this->initialized = true;
+    }
 }
 
 ble_error_t BLEManager::init(BLEConfig *config) {
@@ -74,16 +87,23 @@ ble_error_t BLEManager::init(BLEConfig *config) {
 
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
-    ble.init(this, &BLEManager::_init);
+    EDEBUG_PRINTF("calling BLE init\r\n");
+    ble_error_t ble_error = ble.init(this, &BLEManager::on_init_complete);
+    if (ble_error) {
+        EDEBUG_PRINTF("Error returned by BLE::init");
+        return ble_error;
+    }
 
+    EDEBUG_PRINTF("waiting for BLE::InitializationCompleteCallback\r\n");
     while (!initialized && error == BLE_ERROR_NONE) /* wait for initialization done or error state */;
 
     return error;
 }
 
-ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval, const uint16_t advTimeout) {
-    return init(new BLEConfig(deviceName, advInterval, advTimeout));
-}
+// never used
+//ble_error_t BLEManager::init(const char *deviceName, const uint16_t advInterval, const uint16_t advTimeout) {
+//    return init(new BLEConfig(deviceName, advInterval, advTimeout));
+//}
 
 ble_error_t BLEManager::deinit() {
     if (initialized) {
