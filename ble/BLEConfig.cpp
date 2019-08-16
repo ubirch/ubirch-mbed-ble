@@ -29,11 +29,12 @@
 
 #include "BLEConfig.h"
 
-BLEConfig::BLEConfig(const char *deviceName, uint16_t advertisingInterval, uint16_t advertisingTimeout) {
-    this->deviceName = deviceName;
-    this->advertisingInterval = advertisingInterval;
-    this->advertisingTimeout = advertisingTimeout;
-}
+BLEConfig::BLEConfig(const char *deviceName, uint16_t advertisingInterval, uint16_t advertisingTimeout) :
+        _deviceName(deviceName),
+        _advertisingInterval(advertisingInterval),
+        _advertisingTimeout(advertisingTimeout),
+        _adv_data_builder(_adv_buffer, sizeof(_adv_buffer)) {}
+
 
 ble_error_t BLEConfig::onInit(BLE &ble) {
     ble_error_t error;
@@ -43,7 +44,7 @@ ble_error_t BLEConfig::onInit(BLE &ble) {
 //    error = ble.gap().setAddress(BLEProtocol::AddressType::RANDOM_PRIVATE_RESOLVABLE, {0});
 //    BLE_ASSERT(error, "address type");
 
-    error = ble.gap().setDeviceName((uint8_t *) this->deviceName);
+    error = ble.gap().setDeviceName((uint8_t *) this->_deviceName);
     BLE_ASSERT(error, "device name");
 
     error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED |
@@ -51,13 +52,13 @@ ble_error_t BLEConfig::onInit(BLE &ble) {
     BLE_ASSERT(error, "adv payload");
 
     error = ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME,
-                                                   (uint8_t *) this->deviceName,
-    static_cast<uint8_t>(strlen(this->deviceName)));
+                                                   (uint8_t *) this->_deviceName,
+                                                   static_cast<uint8_t>(strlen(this->_deviceName)));
     BLE_ASSERT(error, "local name");
 
     ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().setAdvertisingInterval(this->advertisingInterval);
-    ble.gap().setAdvertisingTimeout(this->advertisingTimeout);
+    ble.gap().setAdvertisingInterval(this->_advertisingInterval);
+    ble.gap().setAdvertisingTimeout(this->_advertisingTimeout);
 
     return ble.gap().startAdvertising();
 }

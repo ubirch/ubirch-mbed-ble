@@ -33,7 +33,11 @@ static EventQueue *bleEventQueue;
 
 // BLE events processing
 static void scheduleBleEventsProcessing(BLE::OnEventsToProcessCallbackContext *context) {
-    if (bleEventQueue) bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
+    if (bleEventQueue) {
+        bleEventQueue->call(Callback<void()>(&context->ble, &BLE::processEvents));
+    } else {
+        EDEBUG_PRINTF("ERROR scheduleBleEventsProcessing -> no EventQueue initialized\r\n");
+    }
 }
 
 BLEManager &BLEManager::getInstance() {
@@ -62,7 +66,7 @@ void BLEManager::on_init_complete(BLE::InitializationCompleteCallbackContext *pa
     EDEBUG_PRINTF("(BLE::InitializationCompleteCallback\r\n");
 
     if (this->error) {
-        EDEBUG_PRINTF("Error during the initialisation\r\n");
+        EDEBUG_PRINTF("Ble initialization failed\r\n");
         return;
     }
 

@@ -41,10 +41,11 @@
 
 class BLEConfig : ble::Gap::EventHandler {
 public:
-    const char *deviceName;
-    uint16_t advertisingInterval;
-    uint16_t advertisingTimeout;
-
+    const char *_deviceName;
+    uint16_t _advertisingInterval;
+    uint16_t _advertisingTimeout;
+    uint8_t _adv_buffer[ble::LEGACY_ADVERTISING_MAX_SIZE];      //FIXME LEGACY_ADVERTISING_MAX_SIZE
+    ble::AdvertisingDataBuilder _adv_data_builder;
     /**
      * Default configuration parameters for the BLE stack.
      * @param deviceName the device name used in advertising
